@@ -41,6 +41,18 @@ duplicate set #1 — 3 files, 50000 bytes each:
 scanned 6 files in 0.00s → 1 duplicate set, 3 duplicate files, 100000 wasted bytes
 ```
 
+## Benchmarks
+
+Dataset: 2,000 files, 1.24 GB total — 1,400 unique files plus 200 duplicate groups of 3 copies each (600 duplicate files, 289 MB wasted), sizes 4 KiB–4 MiB across 20 subdirectories. Median of 3 runs, warm page cache, measured on a Linux VM with 2 vCPUs:
+
+| Threads | Time |
+|---|---|
+| 1 | 1.11 s |
+| 2 (default) | 0.76 s |
+| 4 | 0.85 s |
+
+2 threads is ~1.45× faster than 1 on this machine; oversubscribing past the core count (4 threads) is slightly slower again. All thread counts report identical results — 200 duplicate sets, 600 duplicate files, 289,386,670 wasted bytes — threading changes speed, not output.
+
 ## Design notes
 
 - **Thread pool**: a fixed set of workers pulls paths off a shared `mpsc` job channel; results return on a second channel. The receiver is shared via `Arc<Mutex<..>>` because `std`'s `Receiver` isn't `Sync`.
