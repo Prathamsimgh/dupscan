@@ -41,6 +41,40 @@ duplicate set #1 — 3 files, 50000 bytes each:
 scanned 6 files in 0.00s → 1 duplicate set, 3 duplicate files, 100000 wasted bytes
 ```
 
+### JSON output
+
+Add `--json` for machine-readable output — the same scan as above:
+
+```sh
+$ dupscan ~/Downloads --json
+```
+
+```json
+{
+  "scanned_files": 6,
+  "duplicate_sets": 1,
+  "duplicate_files": 3,
+  "wasted_bytes": 100000,
+  "groups": [
+    [
+      "/home/user/Downloads/sub/c.bin",
+      "/home/user/Downloads/a.bin",
+      "/home/user/Downloads/b.bin"
+    ]
+  ]
+}
+```
+
+Fields:
+
+- `scanned_files` — files examined (after `--min-size` filtering)
+- `duplicate_sets` — number of duplicate groups found
+- `duplicate_files` — total files that belong to a duplicate group
+- `wasted_bytes` — bytes recoverable by keeping one copy per group: group size × (copies − 1), summed over groups
+- `groups` — one array per duplicate set, listing the identical files (absolute paths)
+
+Exit codes match the human output: `0` on success, `1` on runtime error, `2` on bad arguments. The JSON is written by hand (no serde) to keep the crate at zero dependencies; pipe it into `jq` or any JSON parser as-is.
+
 ## Benchmarks
 
 Dataset: 2,000 files, 1.24 GB total — 1,400 unique files plus 200 duplicate groups of 3 copies each (600 duplicate files, 289 MB wasted), sizes 4 KiB–4 MiB across 20 subdirectories. Median of 3 runs, warm page cache, measured on a Linux VM with 2 vCPUs:
